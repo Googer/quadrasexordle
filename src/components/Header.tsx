@@ -49,8 +49,8 @@ export default function Header(props: HeaderProps) {
   const numGuesses = guesses.length;
   const practice = useSelector((s) => s.practice);
   const title = practice
-    ? `Practice Duotrigordle`
-    : `Daily Duotrigordle #${id}`;
+    ? `Practice Quadrasexordle`
+    : `Daily Quadrasexordle #${id}`;
 
   // Refs so that the buttons are blurred on press
   // so that pressing enter again does not cause the
@@ -66,7 +66,7 @@ export default function Header(props: HeaderProps) {
   const handleNewClick = () => {
     newRef.current?.blur();
     const res = window.confirm(
-      "Are you sure you want to start a new practice duotrigordle?\n" +
+      "Are you sure you want to start a new practice quadrasexordle?\n" +
         "(Your current progress will be lost)"
     );
     if (!res) return;
@@ -80,7 +80,7 @@ export default function Header(props: HeaderProps) {
         "(Your current progress will be lost)"
     );
     if (!res) return;
-    const text = localStorage.getItem("duotrigordle-state");
+    const text = localStorage.getItem("quadrasexordle-state");
     const serialized = text && JSON.parse(text);
     if (isSerialized(serialized)) {
       dispatch(loadState({ serialized }));

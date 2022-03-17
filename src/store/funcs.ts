@@ -2,14 +2,14 @@ import { NUM_GUESSES, START_DATE, State } from ".";
 import { MersenneTwister } from "../util";
 import { NUM_BOARDS, WORDS_TARGET } from "./consts";
 
-// Returns the id for today's duotrigordle
+// Returns the id for today's quadrasexordle
 export function getTodaysId(): number {
   const today = new Date();
   const diff = today.getTime() - START_DATE.getTime();
   return Math.ceil(diff / 1000 / 60 / 60 / 24);
 }
 
-// Given a duotrigordle id, return the corresponding 32 target wordles
+// Given a quadrasexordle id, return the corresponding 64 target wordles
 export function getTargetWords(id: number): string[] {
   const targetWords: string[] = [];
   const rng = MersenneTwister(id);

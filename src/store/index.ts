@@ -9,13 +9,13 @@ import {
 } from "./funcs";
 
 export type State = {
-  // Daily duotrigordle number (seed for target words)
+  // Daily quadrasexordle number (seed for target words)
   id: number;
   // Current word input
   input: string;
   // List of guesses
   guesses: string[];
-  // 32 wordle targets
+  // 64 wordle targets
   targets: string[];
   // Whether or not the game is finished
   gameOver: boolean;

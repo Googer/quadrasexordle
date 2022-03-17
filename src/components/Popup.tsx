@@ -30,25 +30,35 @@ export default function Popup(props: PopupProps) {
   return (
     <div className={cn("popup-wrapper", props.hidden && "hidden")}>
       <div className="popup">
-        <p>Guess all 32 Duotrigordle words in 37 tries!</p>
+        <p>Guess all 64 Quadrasexordle words in 69 tries!</p>
         <p>
-          A new Daily Duotrigordle will be available in {hoursRemaining} hour
+          A new Daily Quadrasexordle will be available in {hoursRemaining} hour
           {hoursRemaining === "1" ? "" : "s"}.
         </p>
         <hr className="separator" />
-        <p>Duotrigordle by Bryan Chen</p>
+        <p>Quadrasexordle by Matt Legowski</p>
         <p>
           Source code on{" "}
           <a
             rel="noreferrer"
             target="_blank"
-            href="https://github.com/thesilican/duotrigordle"
+            href="https://github.com/Googer/quadrasexordle"
           >
             GitHub
           </a>
         </p>
         <p>Based on</p>
         <ul>
+          <li>
+            <a
+                rel="noreferrer"
+                target="_blank"
+                href="https://duotrigordle.com/"
+            >
+              Duotrigordle
+            </a>{" "}
+            by Bryan Chen
+          </li>
           <li>
             <a
               rel="noreferrer"

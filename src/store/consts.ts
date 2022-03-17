@@ -1,8 +1,8 @@
-export const NUM_BOARDS = 32;
+export const NUM_BOARDS = 64;
 
-export const NUM_GUESSES = 37;
+export const NUM_GUESSES = 69;
 
-export const START_DATE = new Date("2022-03-03T00:00:00");
+export const START_DATE = new Date("2022-03-17T00:00:00");
 
 export const WORDS_TARGET = [
   "ABACK",

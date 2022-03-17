@@ -23,7 +23,7 @@ export default function App() {
 
   useLayoutEffect(() => {
     const todaysId = getTodaysId();
-    const text = localStorage.getItem("duotrigordle-state");
+    const text = localStorage.getItem("quadrasexordle-state");
     const serialized = text && JSON.parse(text);
     if (isSerialized(serialized) && serialized.id === todaysId) {
       dispatch(loadState({ serialized }));
@@ -36,7 +36,7 @@ export default function App() {
   useEffect(() => {
     if (!state.practice) {
       localStorage.setItem(
-        "duotrigordle-state",
+        "quadrasexordle-state",
         JSON.stringify(serialize(state))
       );
     }

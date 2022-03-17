@@ -65,9 +65,9 @@ function getShareableText(
   targetGuessCounts: (number | null)[]
 ) {
   const text = [];
-  text.push(`Daily Duotrigordle #${id}\n`);
+  text.push(`Daily Quadrasexordle #${id}\n`);
   text.push(`Guesses: ${guessCount ?? "X"}/${NUM_GUESSES}\n`);
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 16; i++) {
     const row = [];
     for (let j = 0; j < 4; j++) {
       const guessCount = targetGuessCounts[i * 4 + j];
@@ -84,6 +84,6 @@ function getShareableText(
 
     text.push(row.join(" ") + "\n");
   }
-  text.push("https://duotrigordle.com/");
+  text.push("https://quadrasexordle.com/");
   return text.join("");
 }
