@@ -1,18 +1,22 @@
+import cn from "classnames";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
+import fullscreenExitSvg from "../assets/fullscreen-exit.svg";
+import fullscreenSvg from "../assets/fullscreen.svg";
+import helpSvg from "../assets/help.svg";
+import settingsSvg from "../assets/settings.svg";
+import { NUM_BOARDS, NUM_GUESSES } from "../consts";
 import {
-  getTodaysId,
-  isSerialized,
-  loadState,
-  NUM_BOARDS,
-  NUM_GUESSES,
+  formatTimeElapsed,
+  loadGameFromLocalStorage,
+  MersenneTwister,
+} from "../funcs";
+import {
+  showAboutPopup,
+  showSettingsPopup,
   startGame,
   useSelector,
 } from "../store";
-import { MersenneTwister } from "../util";
-import helpSvg from "../assets/help.svg";
-import fullscreenSvg from "../assets/fullscreen.svg";
-import fullscreenExitSvg from "../assets/fullscreen-exit.svg";
 
 // Declare typescript definitions for safari fullscreen stuff
 declare global {
@@ -24,21 +28,32 @@ declare global {
     webkitRequestFullscreen: () => void;
   }
 }
-
 function isFullscreen() {
   const element =
     document.fullscreenElement || document.webkitFullscreenElement;
   return Boolean(element);
 }
+function enterFullscreen() {
+  const element = document.documentElement;
+  if (element.requestFullscreen) {
+    element.requestFullscreen();
+  } else if (element.webkitRequestFullscreen) {
+    element.webkitRequestFullscreen();
+  }
+}
+function exitFullscreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  }
+}
 
-type HeaderProps = {
-  onShowHelp: () => void;
-};
-export default function Header(props: HeaderProps) {
+export default function Header() {
   const dispatch = useDispatch();
-  const id = useSelector((s) => s.id);
-  const targets = useSelector((s) => s.targets);
-  const guesses = useSelector((s) => s.guesses);
+  const id = useSelector((s) => s.game.id);
+  const targets = useSelector((s) => s.game.targets);
+  const guesses = useSelector((s) => s.game.guesses);
   const boardsCompleted = useMemo(
     () =>
       targets
@@ -47,10 +62,16 @@ export default function Header(props: HeaderProps) {
     [targets, guesses]
   );
   const numGuesses = guesses.length;
-  const practice = useSelector((s) => s.practice);
+  const practice = useSelector((s) => s.game.practice);
   const title = practice
     ? `Practice Quadrasexordle`
     : `Daily Quadrasexordle #${id}`;
+  const gameOver = useSelector((s) => s.game.gameOver);
+  const extraGuessesNum =
+    NUM_GUESSES - NUM_BOARDS - (numGuesses - boardsCompleted);
+  const cannotWin = extraGuessesNum < 0;
+  const extraGuesses =
+    extraGuessesNum > 0 ? "+" + extraGuessesNum : extraGuessesNum;
 
   // Refs so that the buttons are blurred on press
   // so that pressing enter again does not cause the
@@ -80,15 +101,10 @@ export default function Header(props: HeaderProps) {
         "(Your current progress will be lost)"
     );
     if (!res) return;
-    const text = localStorage.getItem("quadrasexordle-state");
-    const serialized = text && JSON.parse(text);
-    if (isSerialized(serialized)) {
-      dispatch(loadState({ serialized }));
-    } else {
-      dispatch(startGame({ id: getTodaysId(), practice: false }));
-    }
+    loadGameFromLocalStorage(dispatch);
   };
 
+  // Fullscreen
   const [fullscreen, setFullscreen] = useState(isFullscreen);
   useEffect(() => {
     const handler = () => {
@@ -103,18 +119,9 @@ export default function Header(props: HeaderProps) {
   }, []);
   const handleFullscreenClick = () => {
     if (isFullscreen()) {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      }
+      exitFullscreen();
     } else {
-      const element = document.documentElement;
-      if (element.requestFullscreen) {
-        element.requestFullscreen();
-      } else if (element.webkitRequestFullscreen) {
-        element.webkitRequestFullscreen();
-      }
+      enterFullscreen();
     }
   };
 
@@ -140,26 +147,63 @@ export default function Header(props: HeaderProps) {
         )}
         <p className="title">{title}</p>
         <img
-          className="help"
-          src={helpSvg}
-          alt="Help"
-          onClick={props.onShowHelp}
+          className="icon"
+          src={settingsSvg}
+          alt="Settings"
+          onClick={() => dispatch(showSettingsPopup())}
         />
         <img
-          className="fullscreen"
+          className="icon"
+          src={helpSvg}
+          alt="Help"
+          onClick={() => dispatch(showAboutPopup())}
+        />
+        <img
+          className="icon"
           src={fullscreen ? fullscreenExitSvg : fullscreenSvg}
           alt="Go Fullscreen"
           onClick={handleFullscreenClick}
         />
       </div>
       <div className="row-2">
-        <p className="status">
+        <p>
           Boards Complete: {boardsCompleted}/{NUM_BOARDS}
         </p>
-        <p>
-          Guesses Used: {numGuesses}/{NUM_GUESSES}
+        <Timer />
+        <p className={cn(cannotWin && !gameOver && "cannot-win")}>
+          Guesses Used: {numGuesses}/{NUM_GUESSES} ({extraGuesses})
         </p>
       </div>
     </div>
   );
+}
+
+function Timer() {
+  const [flipFlop, setFlipFlop] = useState(false);
+  const showTimer = useSelector((s) => s.settings.showTimer);
+  const startTime = useSelector((s) => s.game.startTime);
+  const endTime = useSelector((s) => s.game.endTime);
+  const gameOver = useSelector((s) => s.game.gameOver);
+  const hasFirstGuess = useSelector((s) => s.game.guesses.length > 0);
+  const timeElapsed = useMemo(() => {
+    if (gameOver) {
+      return formatTimeElapsed(endTime - startTime);
+    } else if (!hasFirstGuess) {
+      return formatTimeElapsed(0);
+    } else {
+      return formatTimeElapsed(new Date().getTime() - startTime);
+    }
+  }, [startTime, endTime, hasFirstGuess, flipFlop, gameOver]);
+  useEffect(() => {
+    if (!showTimer) return;
+    const interval = setInterval(() => {
+      setFlipFlop((x) => !x);
+    }, 25);
+    return () => clearInterval(interval);
+  }, [showTimer, flipFlop]);
+
+  if (!showTimer) {
+    return <></>;
+  }
+  return <p className="timer">{timeElapsed}</p>;
 }

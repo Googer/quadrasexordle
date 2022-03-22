@@ -1,14 +1,8 @@
 import cn from "classnames";
 import { CSSProperties, useEffect, useMemo } from "react";
 import { useDispatch } from "react-redux";
-import {
-  getGuessColors,
-  inputBackspace,
-  inputEnter,
-  inputLetter,
-  useSelector,
-} from "../store";
-import { range } from "../util";
+import { getGuessColors, range } from "../funcs";
+import { inputBackspace, inputEnter, inputLetter, useSelector } from "../store";
 
 const ALPHABET = new Set([
   "A",
@@ -44,6 +38,7 @@ type KeyboardProps = {
 };
 export default function Keyboard(props: KeyboardProps) {
   const dispatch = useDispatch();
+  const hideKeyboard = useSelector((s) => s.settings.hideKeyboard);
 
   useEffect(() => {
     const handler = (k: KeyboardEvent) => {
@@ -54,7 +49,7 @@ export default function Keyboard(props: KeyboardProps) {
       if (key === "BACKSPACE") {
         dispatch(inputBackspace());
       } else if (key === "ENTER") {
-        dispatch(inputEnter());
+        dispatch(inputEnter({ timestamp: new Date().getTime() }));
       } else if (ALPHABET.has(key)) {
         dispatch(inputLetter({ letter: key }));
       }
@@ -66,7 +61,7 @@ export default function Keyboard(props: KeyboardProps) {
   }, [dispatch]);
 
   return (
-    <div className={cn("keyboard", props.hidden && "hidden")}>
+    <div className={cn("keyboard", (props.hidden || hideKeyboard) && "hidden")}>
       <Key char="Q" />
       <Key char="W" />
       <Key char="E" />
@@ -119,11 +114,11 @@ function Key(props: KeyProps) {
     props.char === "backspace"
       ? () => dispatch(inputBackspace())
       : props.char.startsWith("enter-")
-      ? () => dispatch(inputEnter())
+      ? () => dispatch(inputEnter({ timestamp: new Date().getTime() }))
       : () => dispatch(inputLetter({ letter: props.char }));
 
-  const targets = useSelector((s) => s.targets);
-  const guesses = useSelector((s) => s.guesses);
+  const targets = useSelector((s) => s.game.targets);
+  const guesses = useSelector((s) => s.game.guesses);
 
   const styles = useMemo(
     () => generateStyles(char, targets, guesses),

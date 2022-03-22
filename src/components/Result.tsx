@@ -1,16 +1,20 @@
 import cn from "classnames";
 import { useMemo } from "react";
 import twemoji from "twemoji";
-import { allWordsGuessed, NUM_GUESSES, useSelector } from "../store";
+import { NUM_BOARDS, NUM_GUESSES } from "../consts";
+import { allWordsGuessed, formatTimeElapsed } from "../funcs";
+import { useSelector } from "../store";
 
 type ResultProps = {
   hidden: boolean;
 };
 export default function Result(props: ResultProps) {
-  const id = useSelector((s) => s.id);
-
-  const targets = useSelector((s) => s.targets);
-  const guesses = useSelector((s) => s.guesses);
+  const practice = useSelector((s) => s.game.practice);
+  const id = useSelector((s) => s.game.id);
+  const targets = useSelector((s) => s.game.targets);
+  const guesses = useSelector((s) => s.game.guesses);
+  const showTimer = useSelector((s) => s.settings.showTimer);
+  const timeElapsed = useSelector((s) => s.game.endTime - s.game.startTime);
 
   const shareableText = useMemo(() => {
     const targetGuessCounts: (number | null)[] = [];
@@ -21,8 +25,14 @@ export default function Result(props: ResultProps) {
     const guessCount = allWordsGuessed(guesses, targets)
       ? guesses.length
       : null;
-    return getShareableText(id, guessCount, targetGuessCounts);
-  }, [id, targets, guesses]);
+    return getShareableText(
+      practice,
+      id,
+      guessCount,
+      targetGuessCounts,
+      showTimer ? timeElapsed : null
+    );
+  }, [practice, id, targets, guesses, showTimer, timeElapsed]);
   const parsed = twemoji.parse(shareableText) + "\n";
   const handleCopyToClipboardClick = () => {
     navigator.clipboard
@@ -60,17 +70,30 @@ const EMOJI_MAP = [
 ];
 
 function getShareableText(
+  practice: boolean,
   id: number,
   guessCount: number | null,
-  targetGuessCounts: (number | null)[]
+  targetGuessCounts: (number | null)[],
+  timeElapsed: number | null
 ) {
   const text = [];
-  text.push(`Daily Quadrasexordle #${id}\n`);
+  if (practice) {
+    text.push(`Practice Quadrasexordle\n`);
+  } else {
+    text.push(`Daily Quadrasexordle #${id}\n`);
+  }
   text.push(`Guesses: ${guessCount ?? "X"}/${NUM_GUESSES}\n`);
-  for (let i = 0; i < 16; i++) {
+  if (timeElapsed !== null) {
+    text.push(`Time: ${formatTimeElapsed(timeElapsed)}\n`);
+  }
+  const cols = 4;
+  const rows = Math.ceil(NUM_BOARDS / cols);
+  for (let i = 0; i < rows; i++) {
     const row = [];
-    for (let j = 0; j < 4; j++) {
-      const guessCount = targetGuessCounts[i * 4 + j];
+    for (let j = 0; j < cols; j++) {
+      const idx = i * cols + j;
+      if (idx > NUM_BOARDS) continue;
+      const guessCount = targetGuessCounts[idx];
       if (guessCount === null) {
         row.push("🟥🟥");
       } else {
